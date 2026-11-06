@@ -1,26 +1,296 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EXPARTAN - La Unión Nariño</title>
+<title>EXPARTAN</title>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:white;text-align:center;padding:50px 20px}
-h1{font-size:48px;letter-spacing:3px;margin:0}
-p{font-size:18px;opacity:.8}
-.btn{background:#22c55e;color:#000;padding:16px 28px;border-radius:12px;text-decoration:none;display:inline-block;margin-top:25px;font-weight:bold;font-size:18px}
-.box{background:rgba(255,255,255,.08);padding:20px;border-radius:15px;margin-top:40px}
+*{box-sizing:border-box}
+body{margin:0;background:#0f172a;color:white;font-family:Arial;padding:20px}
+.container{max-width:500px;margin:auto}
+h1{text-align:center;color:#22c55e;font-size:35px}
+.card{background:#1e293b;padding:20px;border-radius:15px;margin:18px 0}
+input{width:100%;padding:14px;margin:10px 0;border-radius:9px;border:0;font-size:16px}
+button{padding:13px;border:0;border-radius:9px;background:#22c55e;color:#07130b;font-weight:bold;font-size:16px;margin:5px;cursor:pointer}
+.reject{background:#ef4444;color:white}
+.small{font-size:13px;color:#94a3b8}
+.balance{font-size:34px;color:#22c55e;font-weight:bold}
+.item{background:#334155;padding:14px;border-radius:10px;margin:12px 0}
+.hidden{display:none}
 </style>
 </head>
 <body>
+<div class="container">
+
 <h1>EXPARTAN</h1>
-<p>Potencia, estilo y resistencia</p>
-<div class="box">
-<p>¡Nuestra web oficial ya está en construcción!</p>
-<p>Desde La Unión, Nariño para toda Colombia</p>
+<p style="text-align:center">Potencia, estilo y resistencia</p>
+
+<div id="login" class="card">
+<h2>Iniciar sesión</h2>
+<input id="email" type="email" placeholder="Correo electrónico">
+<input id="password" type="password" placeholder="Contraseña">
+<button onclick="login()">ENTRAR</button>
+<p id="error"></p>
 </div>
-<a class="btn" href="https://wa.me/573001234567">WhatsApp</a>
-<br><br>
-<small style="opacity:.5">expartan-73e65.web.app</small>
+
+<div id="app" class="hidden">
+
+<div class="card">
+<h2>Mi cuenta</h2>
+<p id="correo"></p>
+<p>Saldo disponible</p>
+<div class="balance" id="saldo">$0</div>
+<button onclick="logout()">CERRAR SESIÓN</button>
+</div>
+
+<div id="userPanel" class="hidden">
+<div class="card">
+<h2>Solicitar recarga</h2>
+<p>Indica el valor que deseas solicitar.</p>
+<input id="monto" type="number" min="1000" max="1000000" placeholder="Cantidad en pesos">
+<button onclick="solicitar()">ENVIAR SOLICITUD</button>
+<p id="mensaje"></p>
+</div>
+
+<div class="card">
+<h3>Mis solicitudes</h3>
+<div id="misSolicitudes"></div>
+</div>
+</div>
+
+<div id="adminPanel" class="hidden">
+<div class="card">
+<h2>Panel de administrador</h2>
+<p>Solicitudes de recarga recibidas</p>
+<div id="solicitudes"></div>
+</div>
+</div>
+
+</div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+getFirestore,collection,doc,getDoc,setDoc,addDoc,
+onSnapshot,query,where,runTransaction,updateDoc,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyDQXOYQqPovM27oU1-alxX4U8QIchyhow4",
+authDomain:"expartan.firebaseapp.com",
+projectId:"expartan",
+storageBucket:"expartan.firebasestorage.app",
+messagingSenderId:"97708642248",
+appId:"1:97708642248:web:73d5b2e2ec9071b7cefafd",
+measurementId:"G-DD51W38QSW"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+// UID del administrador
+const ADMIN_UID="kaq7hvniXZaGNs1bn4CswCE2PUt2";
+
+let usuario=null;
+let unsubscribe=[];
+
+const $=id=>document.getElementById(id);
+
+function dinero(n){
+return "$"+Number(n||0).toLocaleString("es-CO");
+}
+
+function limpiar(){
+unsubscribe.forEach(fn=>fn());
+unsubscribe=[];
+}
+
+window.login=async()=>{
+try{
+await signInWithEmailAndPassword(
+auth,$("email").value.trim(),$("password").value
+);
+$("error").textContent="";
+}catch(e){
+$("error").textContent="Correo o contraseña incorrectos.";
+}
+};
+
+window.logout=async()=>{
+limpiar();
+await signOut(auth);
+};
+
+onAuthStateChanged(auth,async user=>{
+limpiar();
+usuario=user;
+
+$("login").classList.toggle("hidden",!!user);
+$("app").classList.toggle("hidden",!user);
+
+if(!user)return;
+
+$("correo").textContent=user.email;
+
+const admin=user.uid===ADMIN_UID;
+
+$("adminPanel").classList.toggle("hidden",!admin);
+$("userPanel").classList.toggle("hidden",admin);
+
+const userRef=doc(db,"usuarios",user.uid);
+let perfil=await getDoc(userRef);
+
+if(!perfil.exists()){
+await setDoc(userRef,{
+saldo:0,
+correo:user.email
+});
+}
+
+unsubscribe.push(onSnapshot(userRef,snap=>{
+if(snap.exists()){
+$("saldo").textContent=dinero(snap.data().saldo);
+}
+}));
+
+if(admin){
+escucharAdmin();
+}else{
+escucharUsuario();
+}
+});
+
+window.solicitar=async()=>{
+const monto=parseInt($("monto").value);
+
+if(!Number.isInteger(monto)||monto<1000||monto>1000000){
+$("mensaje").textContent="Ingresa una cantidad entre $1.000 y $1.000.000.";
+return;
+}
+
+try{
+await addDoc(collection(db,"recargas"),{
+uid:usuario.uid,
+correo:usuario.email,
+monto:monto,
+estado:"pendiente",
+fecha:serverTimestamp()
+});
+
+$("mensaje").textContent="Solicitud enviada. Espera la aprobación.";
+$("monto").value="";
+}catch(e){
+$("mensaje").textContent="No se pudo enviar la solicitud.";
+}
+};
+
+function escucharUsuario(){
+const q=query(
+collection(db,"recargas"),
+where("uid","==",usuario.uid)
+);
+
+unsubscribe.push(onSnapshot(q,snap=>{
+$("misSolicitudes").innerHTML="";
+
+snap.forEach(d=>{
+const r=d.data();
+$("misSolicitudes").innerHTML+=`
+<div class="item">
+<strong>${dinero(r.monto)}</strong>
+<p>Estado: ${r.estado}</p>
+</div>`;
+});
+}));
+}
+
+function escucharAdmin(){
+unsubscribe.push(onSnapshot(collection(db,"recargas"),snap=>{
+$("solicitudes").innerHTML="";
+
+const solicitudes=snap.docs
+.map(d=>({id:d.id,...d.data()}))
+.sort((a,b)=>(b.fecha?.seconds||0)-(a.fecha?.seconds||0));
+
+if(!solicitudes.length){
+$("solicitudes").textContent="No hay solicitudes todavía.";
+return;
+}
+
+solicitudes.forEach(r=>{
+const div=document.createElement("div");
+div.className="item";
+
+const info=document.createElement("p");
+info.textContent=r.correo+" — "+dinero(r.monto)+" — "+r.estado;
+div.appendChild(info);
+
+if(r.estado==="pendiente"){
+const aceptar=document.createElement("button");
+aceptar.textContent="ACEPTAR";
+aceptar.onclick=()=>aprobar(r.id);
+div.appendChild(aceptar);
+
+const rechazar=document.createElement("button");
+rechazar.textContent="RECHAZAR";
+rechazar.className="reject";
+rechazar.onclick=()=>rechazarSolicitud(r.id);
+div.appendChild(rechazar);
+}
+
+$("solicitudes").appendChild(div);
+});
+}));
+}
+
+async function aprobar(id){
+try{
+await runTransaction(db,async transaction=>{
+const solicitudRef=doc(db,"recargas",id);
+const solicitud=await transaction.get(solicitudRef);
+
+if(!solicitud.exists()||solicitud.data().estado!=="pendiente"){
+throw new Error("Solicitud ya procesada.");
+}
+
+const r=solicitud.data();
+const userRef=doc(db,"usuarios",r.uid);
+const perfil=await transaction.get(userRef);
+
+if(!perfil.exists()){
+throw new Error("Usuario no encontrado.");
+}
+
+const nuevoSaldo=Number(perfil.data().saldo||0)+Number(r.monto);
+
+transaction.update(userRef,{saldo:nuevoSaldo});
+transaction.update(solicitudRef,{estado:"aprobada"});
+});
+
+alert("Recarga aprobada. Saldo actualizado.");
+}catch(e){
+alert("No se pudo aprobar: "+e.message);
+}
+}
+
+async function rechazarSolicitud(id){
+try{
+await updateDoc(doc(db,"recargas",id),{
+estado:"rechazada"
+});
+alert("Solicitud rechazada.");
+}catch(e){
+alert("No se pudo rechazar.");
+}
+}
+</script>
 </body>
 </html>
