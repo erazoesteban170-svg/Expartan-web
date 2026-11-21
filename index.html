@@ -7,290 +7,351 @@
 <title>EXPARTAN</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0f172a;color:white;font-family:Arial;padding:20px}
-.container{max-width:500px;margin:auto}
-h1{text-align:center;color:#22c55e;font-size:35px}
-.card{background:#1e293b;padding:20px;border-radius:15px;margin:18px 0}
-input{width:100%;padding:14px;margin:10px 0;border-radius:9px;border:0;font-size:16px}
-button{padding:13px;border:0;border-radius:9px;background:#22c55e;color:#07130b;font-weight:bold;font-size:16px;margin:5px;cursor:pointer}
-.reject{background:#ef4444;color:white}
-.small{font-size:13px;color:#94a3b8}
-.balance{font-size:34px;color:#22c55e;font-weight:bold}
-.item{background:#334155;padding:14px;border-radius:10px;margin:12px 0}
+body{margin:0;background:#0f172a;color:white;font-family:Arial,sans-serif;padding:22px}
+header{text-align:center;padding:25px 0}
+h1{color:#22c55e;font-size:40px;margin:8px}
+header p{font-size:18px}
+.card{background:#1e293b;padding:22px;border-radius:18px;margin:20px auto;max-width:650px}
+h2{font-size:26px}
+input,select{width:100%;padding:16px;border:0;border-radius:12px;margin:9px 0;font-size:17px}
+button{border:0;border-radius:12px;padding:15px 20px;font-size:17px;font-weight:bold;margin:6px 3px;cursor:pointer}
+.green{background:#22c55e;color:#052e16}
+.red{background:#ef4444;color:white}
+.blue{background:#334155;color:white}
+.money{color:#22c55e;font-size:38px;font-weight:bold}
+.item{background:#334155;padding:16px;border-radius:13px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.level{background:#334155;padding:13px;border-radius:12px;text-align:center}
+.level strong{display:block;color:#22c55e;font-size:19px;margin:8px}
+.small{color:#cbd5e1;font-size:13px}
 .hidden{display:none}
+button:disabled{opacity:.5}
 </style>
 </head>
 <body>
-<div class="container">
 
+<header>
 <h1>EXPARTAN</h1>
-<p style="text-align:center">Potencia, estilo y resistencia</p>
+<p>Potencia, estilo y resistencia</p>
+</header>
 
-<div id="login" class="card">
-<h2>Iniciar sesión</h2>
+<section class="card" id="auth">
+<h2 id="authTitle">Iniciar sesión</h2>
 <input id="email" type="email" placeholder="Correo electrónico">
 <input id="password" type="password" placeholder="Contraseña">
-<button onclick="login()">ENTRAR</button>
-<p id="error"></p>
-</div>
+<button class="green" id="loginBtn" onclick="login()">ENTRAR</button>
+<button class="blue" id="registerBtn" onclick="register()">CREAR CUENTA</button>
+<p id="authMsg"></p>
+</section>
 
-<div id="app" class="hidden">
-
-<div class="card">
+<main id="app" class="hidden">
+<section class="card">
 <h2>Mi cuenta</h2>
-<p id="correo"></p>
+<p id="userEmail"></p>
 <p>Saldo disponible</p>
-<div class="balance" id="saldo">$0</div>
-<button onclick="logout()">CERRAR SESIÓN</button>
-</div>
+<div class="money" id="balance">$0</div>
+<button class="red" onclick="logout()">CERRAR SESIÓN</button>
+</section>
 
-<div id="userPanel" class="hidden">
-<div class="card">
-<h2>Solicitar recarga</h2>
-<p>Indica el valor que deseas solicitar.</p>
-<input id="monto" type="number" min="1000" max="1000000" placeholder="Cantidad en pesos">
-<button onclick="solicitar()">ENVIAR SOLICITUD</button>
-<p id="mensaje"></p>
-</div>
+<section class="card" id="userPanel">
+<h2>Solicitar recarga virtual</h2>
+<p>Selecciona el monto que deseas solicitar:</p>
+<select id="amount">
+<option value="50000">$50.000</option>
+<option value="100000">$100.000</option>
+<option value="150000">$150.000</option>
+<option value="200000">$200.000</option>
+<option value="250000">$250.000</option>
+<option value="300000">$300.000</option>
+<option value="350000">$350.000</option>
+<option value="400000">$400.000</option>
+<option value="450000">$450.000</option>
+<option value="500000">$500.000</option>
+<option value="550000">$550.000</option>
+<option value="600000">$600.000</option>
+<option value="650000">$650.000</option>
+<option value="700000">$700.000</option>
+<option value="750000">$750.000</option>
+<option value="800000">$800.000</option>
+<option value="850000">$850.000</option>
+<option value="900000">$900.000</option>
+<option value="950000">$950.000</option>
+<option value="1000000">$1.000.000</option>
+</select>
+<button class="green" onclick="requestTopup()">SOLICITAR</button>
+<p id="requestMsg"></p>
+</section>
 
-<div class="card">
-<h3>Mis solicitudes</h3>
-<div id="misSolicitudes"></div>
-</div>
-</div>
+<section class="card">
+<h2>Plan de inversión</h2>
+<p>Selecciona un nivel para consultar su siguiente meta acumulada.</p>
+<div class="grid" id="levels"></div>
+<p id="levelMsg"></p>
+<p class="small">Los valores son metas virtuales de planificación. No representan rendimientos garantizados ni inversiones reales.</p>
+</section>
 
-<div id="adminPanel" class="hidden">
-<div class="card">
+<section class="card">
+<h2>Mis solicitudes</h2>
+<div id="myRequests">Cargando solicitudes...</div>
+</section>
+
+<section class="card hidden" id="adminPanel">
 <h2>Panel de administrador</h2>
 <p>Solicitudes de recarga recibidas</p>
-<div id="solicitudes"></div>
-</div>
-</div>
-
-</div>
-</div>
+<div id="requests">Cargando...</div>
+</section>
+</main>
 
 <script type="module">
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut
+ getAuth, createUserWithEmailAndPassword,
+ signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 import {
-getFirestore,collection,doc,getDoc,setDoc,addDoc,
-onSnapshot,query,where,runTransaction,updateDoc,serverTimestamp
+ getFirestore, doc, getDoc, setDoc, collection,
+ addDoc, query, where, onSnapshot, serverTimestamp,
+ runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig={
-apiKey:"AIzaSyDQXOYQqPovM27oU1-alxX4U8QIchyhow4",
-authDomain:"expartan.firebaseapp.com",
-projectId:"expartan",
-storageBucket:"expartan.firebasestorage.app",
-messagingSenderId:"97708642248",
-appId:"1:97708642248:web:73d5b2e2ec9071b7cefafd",
-measurementId:"G-DD51W38QSW"
+const firebaseConfig = {
+ apiKey: "AIzaSyDQXOYQqPovM27oU1-alxX4U8QIchyhow4",
+ authDomain: "expartan.firebaseapp.com",
+ projectId: "expartan",
+ storageBucket: "expartan.firebasestorage.app",
+ messagingSenderId: "97708642248",
+ appId: "1:97708642248:web:73d5b2e2ec9071b7cefafd",
+ measurementId: "G-DD51W38QSW"
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+const ADMIN_UID = "kaq7hvniXZaGNs1bn4CswCE2PUt2";
 
-// UID del administrador
-const ADMIN_UID="kaq7hvniXZaGNs1bn4CswCE2PUt2";
+const appFirebase = initializeApp(firebaseConfig);
+const auth = getAuth(appFirebase);
+const db = getFirestore(appFirebase);
 
-let usuario=null;
-let unsubscribe=[];
+let currentUser = null;
+let stopRequests = null;
+let stopMyRequests = null;
+let stopProfile = null;
 
-const $=id=>document.getElementById(id);
+const $ = id => document.getElementById(id);
+const money = n => "$" + Number(n || 0).toLocaleString("es-CO");
 
-function dinero(n){
-return "$"+Number(n||0).toLocaleString("es-CO");
-}
-
-function limpiar(){
-unsubscribe.forEach(fn=>fn());
-unsubscribe=[];
-}
-
-window.login=async()=>{
-try{
-await signInWithEmailAndPassword(
-auth,$("email").value.trim(),$("password").value
-);
-$("error").textContent="";
-}catch(e){
-$("error").textContent="Correo o contraseña incorrectos.";
-}
+window.register = async function(){
+ const email = $("email").value.trim();
+ const password = $("password").value;
+ $("authMsg").textContent = "Creando cuenta...";
+ try{
+  const result = await createUserWithEmailAndPassword(auth,email,password);
+  await setDoc(doc(db,"usuarios",result.user.uid),{
+   correo: email,
+   saldo: 0
+  });
+  $("authMsg").textContent = "Cuenta creada correctamente.";
+ }catch(e){
+  $("authMsg").textContent = errorText(e);
+ }
 };
 
-window.logout=async()=>{
-limpiar();
-await signOut(auth);
+window.login = async function(){
+ const email = $("email").value.trim();
+ const password = $("password").value;
+ $("authMsg").textContent = "Ingresando...";
+ try{
+  await signInWithEmailAndPassword(auth,email,password);
+  $("authMsg").textContent = "";
+ }catch(e){
+  $("authMsg").textContent = errorText(e);
+ }
 };
 
-onAuthStateChanged(auth,async user=>{
-limpiar();
-usuario=user;
+function errorText(e){
+ const messages = {
+  "auth/email-already-in-use":"Ese correo ya tiene una cuenta.",
+  "auth/invalid-email":"El correo no es válido.",
+  "auth/weak-password":"La contraseña debe tener al menos 6 caracteres.",
+  "auth/invalid-credential":"Correo o contraseña incorrectos.",
+  "auth/network-request-failed":"Revisa tu conexión a internet."
+ };
+ return messages[e.code] || "Error: " + e.message;
+}
 
-$("login").classList.toggle("hidden",!!user);
-$("app").classList.toggle("hidden",!user);
+window.logout = () => signOut(auth);
 
-if(!user)return;
+onAuthStateChanged(auth, async user => {
+ currentUser = user;
+ if(stopRequests) stopRequests();
+ if(stopMyRequests) stopMyRequests();
+ if(stopProfile) stopProfile();
 
-$("correo").textContent=user.email;
+ if(!user){
+  $("auth").classList.remove("hidden");
+  $("app").classList.add("hidden");
+  return;
+ }
 
-const admin=user.uid===ADMIN_UID;
+ $("auth").classList.add("hidden");
+ $("app").classList.remove("hidden");
+ $("userEmail").textContent = user.email;
+ $("adminPanel").classList.toggle("hidden",user.uid !== ADMIN_UID);
 
-$("adminPanel").classList.toggle("hidden",!admin);
-$("userPanel").classList.toggle("hidden",admin);
+ try{
+  const profile = await getDoc(doc(db,"usuarios",user.uid));
+  if(!profile.exists()){
+   await setDoc(doc(db,"usuarios",user.uid),{
+    correo:user.email,saldo:0
+   });
+  }
+ }catch(e){
+  alert("No se pudo cargar el perfil: "+e.message);
+ }
 
-const userRef=doc(db,"usuarios",user.uid);
-let perfil=await getDoc(userRef);
+ stopProfile = onSnapshot(doc(db,"usuarios",user.uid),snap=>{
+  if(snap.exists()) $("balance").textContent = money(snap.data().saldo);
+ });
 
-if(!perfil.exists()){
-await setDoc(userRef,{
-saldo:0,
-correo:user.email
+ const mine = query(
+  collection(db,"recargas"),
+  where("uid","==",user.uid)
+ );
+
+ stopMyRequests = onSnapshot(mine,snap=>{
+  const area = $("myRequests");
+  if(snap.empty){
+   area.textContent = "Todavía no tienes solicitudes.";
+   return;
+  }
+  area.innerHTML = "";
+  snap.forEach(d=>{
+   const r=d.data();
+   const div=document.createElement("div");
+   div.className="item";
+   div.textContent=money(r.monto)+" — "+(r.estado || "pendiente");
+   area.appendChild(div);
+  });
+ });
+
+ if(user.uid === ADMIN_UID){
+  stopRequests = onSnapshot(collection(db,"recargas"),snap=>{
+   const area=$("requests");
+   area.innerHTML="";
+   if(snap.empty){
+    area.textContent="No hay solicitudes.";
+    return;
+   }
+   snap.forEach(d=>{
+    const r=d.data();
+    const div=document.createElement("div");
+    div.className="item";
+    const info=document.createElement("p");
+    info.textContent=(r.correo || "Sin correo")+" — "+money(r.monto)+" — "+(r.estado || "pendiente");
+    div.appendChild(info);
+
+    if(r.estado==="pendiente"){
+     const accept=document.createElement("button");
+     accept.className="green";
+     accept.textContent="ACEPTAR";
+     accept.onclick=()=>approve(d.id);
+     const reject=document.createElement("button");
+     reject.className="red";
+     reject.textContent="RECHAZAR";
+     reject.onclick=()=>rejectRequest(d.id);
+     div.append(accept,reject);
+    }
+    area.appendChild(div);
+   });
+  },e=>{
+   areaError("requests",e);
+  });
+ }
 });
-}
 
-unsubscribe.push(onSnapshot(userRef,snap=>{
-if(snap.exists()){
-$("saldo").textContent=dinero(snap.data().saldo);
-}
-}));
-
-if(admin){
-escucharAdmin();
-}else{
-escucharUsuario();
-}
-});
-
-window.solicitar=async()=>{
-const monto=parseInt($("monto").value);
-
-if(!Number.isInteger(monto)||monto<1000||monto>1000000){
-$("mensaje").textContent="Ingresa una cantidad entre $1.000 y $1.000.000.";
-return;
-}
-
-try{
-await addDoc(collection(db,"recargas"),{
-uid:usuario.uid,
-correo:usuario.email,
-monto:monto,
-estado:"pendiente",
-fecha:serverTimestamp()
-});
-
-$("mensaje").textContent="Solicitud enviada. Espera la aprobación.";
-$("monto").value="";
-}catch(e){
-$("mensaje").textContent="No se pudo enviar la solicitud.";
-}
+window.requestTopup = async function(){
+ if(!currentUser) return;
+ const amount=Number($("amount").value);
+ if(!Number.isInteger(amount)||amount<50000||amount>1000000||amount%50000!==0){
+  $("requestMsg").textContent="Selecciona un monto válido.";
+  return;
+ }
+ $("requestMsg").textContent="Enviando solicitud...";
+ try{
+  await addDoc(collection(db,"recargas"),{
+   uid:currentUser.uid,
+   correo:currentUser.email,
+   monto:amount,
+   estado:"pendiente",
+   fecha:serverTimestamp()
+  });
+  $("requestMsg").textContent="Solicitud enviada al administrador.";
+ }catch(e){
+  $("requestMsg").textContent="No se pudo enviar: "+e.message;
+ }
 };
 
-function escucharUsuario(){
-const q=query(
-collection(db,"recargas"),
-where("uid","==",usuario.uid)
-);
+window.approve = async function(id){
+ if(!currentUser || currentUser.uid!==ADMIN_UID) return;
+ try{
+  await runTransaction(db,async tx=>{
+   const requestRef=doc(db,"recargas",id);
+   const requestSnap=await tx.get(requestRef);
+   if(!requestSnap.exists()) throw new Error("La solicitud no existe.");
+   const r=requestSnap.data();
+   if(r.estado!=="pendiente") throw new Error("Esta solicitud ya fue procesada.");
+   if(!Number.isInteger(r.monto)||r.monto<50000||r.monto>1000000) throw new Error("Monto inválido.");
+   const userRef=doc(db,"usuarios",r.uid);
+   const userSnap=await tx.get(userRef);
+   if(!userSnap.exists()) throw new Error("No existe el perfil del usuario.");
+   const oldBalance=Number(userSnap.data().saldo||0);
+   tx.update(userRef,{saldo:oldBalance+r.monto});
+   tx.update(requestRef,{estado:"aprobada"});
+  });
+  alert("Solicitud aprobada y saldo virtual actualizado.");
+ }catch(e){
+  alert("No se pudo aprobar: "+e.message);
+ }
+};
 
-unsubscribe.push(onSnapshot(q,snap=>{
-$("misSolicitudes").innerHTML="";
+window.rejectRequest = async function(id){
+ if(!currentUser || currentUser.uid!==ADMIN_UID) return;
+ try{
+  await runTransaction(db,async tx=>{
+   const ref=doc(db,"recargas",id);
+   const snap=await tx.get(ref);
+   if(!snap.exists()||snap.data().estado!=="pendiente")
+    throw new Error("La solicitud ya fue procesada.");
+   tx.update(ref,{estado:"rechazada"});
+  });
+  alert("Solicitud rechazada.");
+ }catch(e){
+  alert(e.message);
+ }
+};
 
-snap.forEach(d=>{
-const r=d.data();
-$("misSolicitudes").innerHTML+=`
-<div class="item">
-<strong>${dinero(r.monto)}</strong>
-<p>Estado: ${r.estado}</p>
-</div>`;
+function areaError(id,e){
+ $(id).textContent="Error al cargar: "+e.message;
+}
+
+const levels=[];
+for(let n=20000;n<=1000000;n+=20000) levels.push(n);
+const levelArea=$("levels");
+levels.forEach((n,i)=>{
+ const div=document.createElement("div");
+ div.className="level";
+ const amount=document.createElement("strong");
+ amount.textContent=money(n);
+ const next=document.createElement("span");
+ next.className="small";
+ next.textContent=i<levels.length-1
+  ?"Meta acumulada: "+money(n+levels[i+1])
+  :"Nivel máximo";
+ div.append(amount,next);
+ div.onclick=()=>{
+  $("levelMsg").textContent="Nivel seleccionado: "+money(n)+
+   (i<levels.length-1?". Meta acumulada: "+money(n+levels[i+1]):". Has llegado al nivel máximo.");
+ };
+ levelArea.appendChild(div);
 });
-}));
-}
-
-function escucharAdmin(){
-unsubscribe.push(onSnapshot(collection(db,"recargas"),snap=>{
-$("solicitudes").innerHTML="";
-
-const solicitudes=snap.docs
-.map(d=>({id:d.id,...d.data()}))
-.sort((a,b)=>(b.fecha?.seconds||0)-(a.fecha?.seconds||0));
-
-if(!solicitudes.length){
-$("solicitudes").textContent="No hay solicitudes todavía.";
-return;
-}
-
-solicitudes.forEach(r=>{
-const div=document.createElement("div");
-div.className="item";
-
-const info=document.createElement("p");
-info.textContent=r.correo+" — "+dinero(r.monto)+" — "+r.estado;
-div.appendChild(info);
-
-if(r.estado==="pendiente"){
-const aceptar=document.createElement("button");
-aceptar.textContent="ACEPTAR";
-aceptar.onclick=()=>aprobar(r.id);
-div.appendChild(aceptar);
-
-const rechazar=document.createElement("button");
-rechazar.textContent="RECHAZAR";
-rechazar.className="reject";
-rechazar.onclick=()=>rechazarSolicitud(r.id);
-div.appendChild(rechazar);
-}
-
-$("solicitudes").appendChild(div);
-});
-}));
-}
-
-async function aprobar(id){
-try{
-await runTransaction(db,async transaction=>{
-const solicitudRef=doc(db,"recargas",id);
-const solicitud=await transaction.get(solicitudRef);
-
-if(!solicitud.exists()||solicitud.data().estado!=="pendiente"){
-throw new Error("Solicitud ya procesada.");
-}
-
-const r=solicitud.data();
-const userRef=doc(db,"usuarios",r.uid);
-const perfil=await transaction.get(userRef);
-
-if(!perfil.exists()){
-throw new Error("Usuario no encontrado.");
-}
-
-const nuevoSaldo=Number(perfil.data().saldo||0)+Number(r.monto);
-
-transaction.update(userRef,{saldo:nuevoSaldo});
-transaction.update(solicitudRef,{estado:"aprobada"});
-});
-
-alert("Recarga aprobada. Saldo actualizado.");
-}catch(e){
-alert("No se pudo aprobar: "+e.message);
-}
-}
-
-async function rechazarSolicitud(id){
-try{
-await updateDoc(doc(db,"recargas",id),{
-estado:"rechazada"
-});
-alert("Solicitud rechazada.");
-}catch(e){
-alert("No se pudo rechazar.");
-}
-}
 </script>
 </body>
 </html>
